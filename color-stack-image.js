@@ -117,3 +117,4 @@ class ColorStackContainer {
         }
     }
 }
+customElements.define('color-stack-image',ColorStackImageComponent)
