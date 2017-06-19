@@ -33,6 +33,11 @@ class ColorStackImageComponent extends HTMLElement {
         this.img.onload = () => {
             this.render()
         }
+        this.img.onmousedown = (event) => {
+            if(this.colorStackContainer) {
+                this.colorStackContainer.startMoving()
+            }
+        }
     }
 }
 class ColorStack {
