@@ -19,15 +19,11 @@ class ColorStackImageComponent extends HTMLElement {
     render() {
         const w = this.img.width,h = this.img.height
         const canvas = document.createElement('canvas')
-        if(!this.colorstacks && this.colors.length > 0) {
-            var gapY = (h/this.colors.length),y = h+gapY
-            this.colorstacks = this.colors.map((color)=>{
-                y = y - gapY
-                return new ColorStack(color,y,w,gapY)
-            })
-        }
         canvas.width = w
         canvas.height = h
+        if(!this.colorStackContainer && this.colors.length>0) {
+            this.colorStackContainer = new ColorStackContainer(colors,w,h)
+        }
         const context = canvas.getContext('2d')
         context.drawImage(this.img,0,0)
         this.img.src = canvas.toDataURL()
@@ -71,5 +67,48 @@ class ColorStack {
     }
     stopped() {
         return this.dir == 0
+    }
+}
+class ColorStackContainer {
+    constructor(colors,w,h) {
+        this.initColorStacks(colors,w,h)
+        this.index = 0
+        this.dir = 1
+        this.maxIndex = this.colors.length
+        this.isAnimating = false
+    }
+    initColorStacks(colors,w,h) {
+      var gapY = (h/colors.length),y = h+gapY
+      this.colorstacks = this.colors.map((color)=>{
+          y = y - gapY
+          return new ColorStack(color,y,w,gapY)
+      })
+    }
+    draw(context) {
+        this.colorstacks.forEach((colorstack)=>{
+            colorstack.draw(context)
+        })
+    }
+    startMoving() {
+        if(this.isAnimating == false) {
+            this.colorstacks[this.index].startMoving(this.dir)
+            const currColorStack = this.colorstacks[this.index]
+            const interval = setInterval(()=>{
+                currColorStack.update()
+                if(currColorStack.stopped()  == true) {
+                    clearInterval(interval)
+                    this.isAnimating = false
+                    this.index += this.dir
+                    if(this.index == this.maxIndex) {
+                        this.index = this.maxIndex -1
+                        this.dir = -1
+                    }
+                    if(this.index == -1)  {
+                        this.dir = 1
+                        this.index = 0
+                    }
+                }
+            },50)
+        }
     }
 }
