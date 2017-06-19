@@ -22,10 +22,12 @@ class ColorStackImageComponent extends HTMLElement {
         canvas.width = w
         canvas.height = h
         if(!this.colorStackContainer && this.colors.length>0) {
-            this.colorStackContainer = new ColorStackContainer(colors,w,h)
+            this.colorStackContainer = new ColorStackContainer(this,this.colors,w,h)
         }
         const context = canvas.getContext('2d')
+        context.clearRect(0,0,w,h)
         context.drawImage(this.img,0,0)
+        this.colorStackContainer.draw(context)
         this.img.src = canvas.toDataURL()
     }
     connectedCallback() {
@@ -51,8 +53,8 @@ class ColorStack {
     }
     draw(context) {
         context.save()
-        context.globalAlpha = 0.5
         context.fillStyle = this.color
+        context.globalAlpha = 0.5
         context.fillRect(0,this.y,this.w,this.h)
         context.restore()
     }
@@ -68,6 +70,7 @@ class ColorStack {
         if(this.w < 0) {
             this.dir = 0
             this.w = 0
+            console.log(this.w)
         }
     }
     stopped() {
@@ -75,16 +78,17 @@ class ColorStack {
     }
 }
 class ColorStackContainer {
-    constructor(colors,w,h) {
+    constructor(component,colors,w,h) {
+        this.component = component
         this.initColorStacks(colors,w,h)
         this.index = 0
         this.dir = 1
-        this.maxIndex = this.colors.length
+        this.maxIndex = colors.length
         this.isAnimating = false
     }
     initColorStacks(colors,w,h) {
-      var gapY = (h/colors.length),y = h+gapY
-      this.colorstacks = this.colors.map((color)=>{
+      var gapY = (h/colors.length),y = h
+      this.colorstacks = colors.map((color)=>{
           y = y - gapY
           return new ColorStack(color,y,w,gapY)
       })
@@ -98,7 +102,11 @@ class ColorStackContainer {
         if(this.isAnimating == false) {
             this.colorstacks[this.index].startMoving(this.dir)
             const currColorStack = this.colorstacks[this.index]
+            this.isAnimating = true
             const interval = setInterval(()=>{
+
+                console.log(this.dir)
+                this.component.render()
                 currColorStack.update()
                 if(currColorStack.stopped()  == true) {
                     clearInterval(interval)
@@ -107,6 +115,7 @@ class ColorStackContainer {
                     if(this.index == this.maxIndex) {
                         this.index = this.maxIndex -1
                         this.dir = -1
+                        console.log(this.dir)
                     }
                     if(this.index == -1)  {
                         this.dir = 1
